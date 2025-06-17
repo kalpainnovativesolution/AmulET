@@ -69,7 +69,7 @@ os.makedirs("uploads", exist_ok=True)
 
 st.set_page_config(page_title="Excel ML Analyzer", layout="wide")
 
-st.title("📊 Excel File Analyzer with ML")
+st.title("📊 AMUL ET Cattle: Unveiling Insights Through Data Visualization")
 
 uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 
