@@ -3,6 +3,7 @@ pandas
 numpy
 matplotlib
 seaborn
+plotly
 scikit-learn
 statsmodels
 scipy
