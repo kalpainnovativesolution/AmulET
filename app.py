@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 import os
+from PIL import Image
+
 
 def process_excel_file(filepath: str) -> dict:
     """
@@ -73,7 +75,20 @@ os.makedirs("uploads", exist_ok=True)
 
 st.set_page_config(page_title="Excel ML Analyzer", layout="wide")
 
-st.title("📊 AMUL ET Pregnancy: Data-Driven Insights")
+# Display logo on the top-right
+logo_path = "uploads/Prompt_Logo.png"  # Adjust path if logo is in your GitHub repo or elsewhere
+
+# Save the uploaded logo file (if not already in the repo)
+with open(logo_path, "wb") as f:
+    f.write(open("Prompt_Logo.png", "rb").read())  # You can copy or move logo to uploads folder manually
+
+# Render with column layout
+col1, col2 = st.columns([6, 1])
+with col1:
+    st.title("📊 AMUL ET Pregnancy: Data-Driven Insights")
+with col2:
+    logo = Image.open(logo_path)
+    st.image(logo, use_column_width=True)
 
 uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 
