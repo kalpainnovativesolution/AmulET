@@ -88,7 +88,7 @@ with col1:
     st.title("📊 AMUL ET Pregnancy: Data-Driven Insights")
 with col2:
     logo = Image.open(logo_path)
-    st.image(logo, use_column_width=True)
+    st.image(logo, use_container_width=True)
 
 uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 
