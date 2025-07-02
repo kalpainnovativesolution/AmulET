@@ -162,6 +162,20 @@ def process_excel_file(filepath: str) -> dict:
     ax.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
 
+    ###################### Feature 7: Dam Breed & Sire Breed Combination ######################
+    df['Dam Breed'] = df['Dam Breed'].astype(str).str.strip().str.title()
+    df['Sire Breed'] = df['Sire Breed'].astype(str).str.strip().str.title()
+    positive_data = df[df['Pregnacy report'] == 'positive']
+    grouped_positive = positive_data.groupby(['Dam Breed', 'Sire Breed']).size().reset_index(name='Positive Count')
+    total_reports = df.groupby(['Dam Breed', 'Sire Breed']).size().reset_index(name='Total Reports')
+    merged_data = pd.merge(grouped_positive, total_reports, on=['Dam Breed', 'Sire Breed'])
+    merged_data['% Positive'] = (merged_data['Positive Count'] / merged_data['Total Reports']) * 100
+    fig_breed_bar = px.bar(merged_data, x='Dam Breed', y='% Positive', color='Sire Breed', title="Positive Pregnancy Report % by Dam Breed and Sire Breed", labels={'% Positive': 'Percentage of Positive'}, text='% Positive')
+    fig_breed_bar.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+    fig_breed_bar.update_layout(width=800, height=600, margin=dict(l=50, r=50, t=80, b=50), font=dict(size=12))
+    fig_breed_heatmap = px.density_heatmap(merged_data, x='Sire Breed', y='Dam Breed', z='% Positive', text_auto='.2f', color_continuous_scale='Cividis', title='% Positive Pregnancy Report Heatmap by Dam Breed and Sire Breed', labels={'% Positive': '% Positive'})
+    fig_breed_heatmap.update_layout(width=800, height=800, margin=dict(l=60, r=60, t=80, b=60), font=dict(size=12))
+
     return {
         "tables": summary_dfs,
         "graphs": figs,
@@ -175,47 +189,8 @@ def process_excel_file(filepath: str) -> dict:
         "org_graph": fig5,
         "dam_sire_summary": summary,
         "dam_sire_plotly": fig_plotly,
-        "dam_sire_top15": fig_top15
+        "dam_sire_top15": fig_top15,
+        "breed_summary": merged_data,
+        "breed_bar": fig_breed_bar,
+        "breed_heatmap": fig_breed_heatmap
     }
-
-os.makedirs("uploads", exist_ok=True)
-st.set_page_config(page_title="Excel ML Analyzer", layout="wide")
-st.title("📊 Excel File Analyzer with ML")
-
-uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
-if uploaded_file is not None:
-    with st.spinner("Processing..."):
-        filepath = os.path.join("uploads", uploaded_file.name)
-        with open(filepath, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        result = process_excel_file(filepath)
-
-        for year, df in result["tables"].items():
-            st.subheader(f"📄 Table: {year}")
-            st.dataframe(df)
-        for year, fig in result["graphs"].items():
-            st.subheader(f"📈 Graph: {year}")
-            st.pyplot(fig)
-
-        st.subheader("📄 Pregnancy Report by Site & Grade of CL")
-        st.dataframe(result["site_summary"])
-        st.pyplot(result["site_graph"])
-
-        st.subheader("📄 Positive Pregnancies by Stage & Age of Embryo")
-        st.dataframe(result["embryo_table"])
-        st.pyplot(result["embryo_graph"])
-
-        st.subheader("📄 Pregnancy Report by Semen Type")
-        st.dataframe(result["semen_summary"])
-        st.pyplot(result["semen_graph"])
-
-        st.subheader("📄 Pregnancy Report by Organization")
-        st.dataframe(result["org_summary"])
-        st.pyplot(result["org_graph"])
-
-        st.subheader("📄 Pregnancy Report by Dam and Sire ID")
-        st.dataframe(result["dam_sire_summary"])
-        st.plotly_chart(result["dam_sire_plotly"], use_container_width=True)
-
-        st.subheader("📈 Top 15 Dam–Sire Combinations by Positive Pregnancies")
-        st.pyplot(result["dam_sire_top15"])
