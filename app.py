@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import os
 
 def process_excel_file(filepath: str) -> dict:
@@ -101,13 +102,35 @@ def process_excel_file(filepath: str) -> dict:
     ax2.grid(axis='y', linestyle='--', alpha=0.6)
     plt.tight_layout()
 
+    ###################### Feature 3: Pregnancy Report by Stage & Age of Embryo ######################
+
+    embryo_data = df[['Stage of embryo', 'Age of embryo', 'Pregnacy report']].copy()
+
+    embryo_data['Stage of embryo'] = embryo_data['Stage of embryo'].str.strip()
+    embryo_data['Age of embryo'] = embryo_data['Age of embryo'].astype(str).str.strip()
+    embryo_data['Pregnacy report'] = embryo_data['Pregnacy report'].str.strip().str.lower()
+
+    positive_embryo_data = embryo_data[embryo_data['Pregnacy report'] == 'positive']
+
+    summary = positive_embryo_data.groupby(['Stage of embryo', 'Age of embryo']).size().reset_index(name='Positive Count')
+    pivot_table = summary.pivot(index='Stage of embryo', columns='Age of embryo', values='Positive Count').fillna(0)
+
+    fig3, ax3 = plt.subplots(figsize=(10, 6))
+    sns.heatmap(pivot_table, annot=True, fmt=".0f", cmap="cividis", ax=ax3)
+    ax3.set_title("Positive Pregnancies by Embryo Stage and Age")
+    ax3.set_xlabel("Age of Embryo")
+    ax3.set_ylabel("Stage of Embryo")
+    plt.tight_layout()
+
     return {
         "tables": {
             "Pregnancy Data": pregnancy_data,
-            "Pregnancy Report by Site & Grade of CL": site_summary
+            "Pregnancy Report by Site & Grade of CL": site_summary,
+            "Pregnancy Report by Stage & Age of Embryo": pivot_table
         } | {f"Summary {year}": df for year, df in summary_dfs.items()},
         "graphs": figs,
-        "site_cl_graph": fig2
+        "site_cl_graph": fig2,
+        "embryo_stage_graph": fig3
     }
 
 ###################### Streamlit UI ######################
@@ -127,18 +150,24 @@ if uploaded_file is not None:
 
         result = process_excel_file(filepath)
 
-        # Display Feature 1: Tables & Graphs Year-wise
+        # Feature 1: Year & Quarter
         for name, df in result.get("tables", {}).items():
-            st.subheader(f"📄 Table: {name}")
-            st.dataframe(df)
+            if name.startswith("Summary"):
+                st.subheader(f"📄 Table: {name}")
+                st.dataframe(df)
 
         for year, fig in result.get("graphs", {}).items():
             st.subheader(f"📈 Graph: {year}")
             st.pyplot(fig)
 
-        # Display Feature 2: Site & Grade of CL Table & Graph
+        # Feature 2: Site & Grade of CL
         st.subheader("📄 Pregnancy Report by Site & Grade of CL")
         st.dataframe(result["tables"]["Pregnancy Report by Site & Grade of CL"])
-
         st.subheader("📈 Pregnancy Report by Site & Grade of CL")
         st.pyplot(result["site_cl_graph"])
+
+        # Feature 3: Stage & Age of Embryo
+        st.subheader("📄 Positive Pregnancies by Stage & Age of Embryo")
+        st.dataframe(result["tables"]["Pregnancy Report by Stage & Age of Embryo"])
+        st.subheader("📈 Positive Pregnancies by Stage & Age of Embryo")
+        st.pyplot(result["embryo_stage_graph"])
