@@ -122,15 +122,63 @@ def process_excel_file(filepath: str) -> dict:
     ax3.set_ylabel("Stage of Embryo")
     plt.tight_layout()
 
+    ###################### Feature 4: Pregnancy Report by Type of Semen Used ######################
+
+    semen_data = df[['Conventional/ Sexed semen', 'Pregnacy report']].copy()
+    semen_data['Conventional/ Sexed semen'] = semen_data['Conventional/ Sexed semen'].str.strip().str.title()
+    semen_data['Pregnacy report'] = semen_data['Pregnacy report'].str.strip().str.lower()
+
+    semen_summary = semen_data.pivot_table(index='Conventional/ Sexed semen',
+                                           columns='Pregnacy report',
+                                           aggfunc='size',
+                                           fill_value=0)
+
+    semen_summary['Total ETs'] = semen_summary.sum(axis=1)
+    if 'positive' in semen_summary.columns:
+        semen_summary['Positive %'] = (semen_summary['positive'] / semen_summary['Total ETs'] * 100).round(2)
+    else:
+        semen_summary['Positive %'] = 0
+
+    cols = ['Total ETs'] + sorted([col for col in semen_summary.columns if col not in ['Total ETs', 'Positive %']]) + ['Positive %']
+    semen_summary = semen_summary[cols]
+
+    fig4, ax4 = plt.subplots(figsize=(8, 5))
+    bar_width = 0.35
+    x = range(len(semen_summary))
+
+    bars_total = ax4.bar(x, semen_summary['Total ETs'], width=bar_width, label='Total ETs', color='skyblue')
+
+    if 'positive' in semen_summary.columns:
+        bars_positive = ax4.bar([i + bar_width for i in x], semen_summary['positive'], width=bar_width, label='Positive Pregnancies', color='mediumseagreen')
+
+        for bar in bars_positive:
+            height = bar.get_height()
+            ax4.text(bar.get_x() + bar.get_width()/2, height + 1, f'{int(height)}', ha='center', va='bottom', fontsize=9)
+
+    for bar in bars_total:
+        height = bar.get_height()
+        ax4.text(bar.get_x() + bar.get_width()/2, height + 1, f'{int(height)}', ha='center', va='bottom', fontsize=9)
+
+    ax4.set_xticks([i + bar_width/2 for i in x])
+    ax4.set_xticklabels(semen_summary.index, rotation=0)
+    ax4.set_xlabel('Semen Type')
+    ax4.set_ylabel('Count')
+    ax4.set_title('Pregnancy Report by Semen Type')
+    ax4.legend()
+    ax4.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.tight_layout()
+
     return {
         "tables": {
             "Pregnancy Data": pregnancy_data,
             "Pregnancy Report by Site & Grade of CL": site_summary,
-            "Pregnancy Report by Stage & Age of Embryo": pivot_table
+            "Pregnancy Report by Stage & Age of Embryo": pivot_table,
+            "Pregnancy Report by Semen Type": semen_summary
         } | {f"Summary {year}": df for year, df in summary_dfs.items()},
         "graphs": figs,
         "site_cl_graph": fig2,
-        "embryo_stage_graph": fig3
+        "embryo_stage_graph": fig3,
+        "semen_graph": fig4
     }
 
 ###################### Streamlit UI ######################
@@ -171,3 +219,9 @@ if uploaded_file is not None:
         st.dataframe(result["tables"]["Pregnancy Report by Stage & Age of Embryo"])
         st.subheader("📈 Positive Pregnancies by Stage & Age of Embryo")
         st.pyplot(result["embryo_stage_graph"])
+
+        # Feature 4: Type of Semen Used
+        st.subheader("📄 Pregnancy Report by Semen Type")
+        st.dataframe(result["tables"]["Pregnancy Report by Semen Type"])
+        st.subheader("📈 Pregnancy Report by Semen Type")
+        st.pyplot(result["semen_graph"])
