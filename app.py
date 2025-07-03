@@ -136,61 +136,61 @@ def process_excel_file(filepath: str) -> dict:
     ax5.grid(axis='y', linestyle='--', alpha=0.6)
     plt.tight_layout()
 
-    ###################### Feature 6: Dam & Sire Combination ######################
-    df['Dam'] = df['Dam'].astype(str).str.strip().str.title()
-    df['Sire id '] = df['Sire id '].astype(str).str.strip().str.title()
-    df['Pregnacy report'] = df['Pregnacy report'].astype(str).str.strip().str.lower()
-    summary = df.groupby(['Dam', 'Sire id ', 'Pregnacy report']).size().unstack(fill_value=0).reset_index()
-    summary['Total ETs'] = summary.sum(axis=1, numeric_only=True)
-    summary['% Positive'] = round(summary['positive'] / summary['Total ETs'] * 100, 2) if 'positive' in summary.columns else 0.0
-    summary = summary.sort_values(by='positive', ascending=False, na_position='last')
-    fig_plotly = px.bar(summary, x='Dam', y='positive', color='Sire id ', title="Positive Pregnancy Report by Dam and Sire ID", labels={'positive': 'Number of Positive Reports'}, text='% Positive')
-    fig_plotly.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
-    fig_plotly.update_layout(width=1500, height=900, margin=dict(l=50, r=50, t=80, b=100), font=dict(size=12), xaxis_tickangle=45)
-    top_combinations = summary[summary['positive'] > 0].copy()
-    top_combinations['Dam × Sire'] = top_combinations['Dam'] + ' × ' + top_combinations['Sire id ']
-    top_combinations = top_combinations.sort_values(by='positive', ascending=False).head(15)
-    fig_top15, ax = plt.subplots(figsize=(12, 6))
-    bars = ax.bar(top_combinations['Dam × Sire'], top_combinations['positive'], color='mediumseagreen')
-    for bar in bars:
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, height + 0.5, f'{int(height)}', ha='center', va='bottom', fontsize=9)
-    ax.set_xticklabels(top_combinations['Dam × Sire'], rotation=45, ha='right')
-    ax.set_xlabel('Dam × Sire Combination')
-    ax.set_ylabel('Positive Pregnancies')
-    ax.set_title('Top 15 Dam–Sire Combinations by Positive Pregnancy Outcome')
-    ax.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
+    # ###################### Feature 6: Dam & Sire Combination ######################
+    # df['Dam'] = df['Dam'].astype(str).str.strip().str.title()
+    # df['Sire id '] = df['Sire id '].astype(str).str.strip().str.title()
+    # df['Pregnacy report'] = df['Pregnacy report'].astype(str).str.strip().str.lower()
+    # summary = df.groupby(['Dam', 'Sire id ', 'Pregnacy report']).size().unstack(fill_value=0).reset_index()
+    # summary['Total ETs'] = summary.sum(axis=1, numeric_only=True)
+    # summary['% Positive'] = round(summary['positive'] / summary['Total ETs'] * 100, 2) if 'positive' in summary.columns else 0.0
+    # summary = summary.sort_values(by='positive', ascending=False, na_position='last')
+    # fig_plotly = px.bar(summary, x='Dam', y='positive', color='Sire id ', title="Positive Pregnancy Report by Dam and Sire ID", labels={'positive': 'Number of Positive Reports'}, text='% Positive')
+    # fig_plotly.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+    # fig_plotly.update_layout(width=1500, height=900, margin=dict(l=50, r=50, t=80, b=100), font=dict(size=12), xaxis_tickangle=45)
+    # top_combinations = summary[summary['positive'] > 0].copy()
+    # top_combinations['Dam × Sire'] = top_combinations['Dam'] + ' × ' + top_combinations['Sire id ']
+    # top_combinations = top_combinations.sort_values(by='positive', ascending=False).head(15)
+    # fig_top15, ax = plt.subplots(figsize=(12, 6))
+    # bars = ax.bar(top_combinations['Dam × Sire'], top_combinations['positive'], color='mediumseagreen')
+    # for bar in bars:
+    #     height = bar.get_height()
+    #     ax.text(bar.get_x() + bar.get_width()/2, height + 0.5, f'{int(height)}', ha='center', va='bottom', fontsize=9)
+    # ax.set_xticklabels(top_combinations['Dam × Sire'], rotation=45, ha='right')
+    # ax.set_xlabel('Dam × Sire Combination')
+    # ax.set_ylabel('Positive Pregnancies')
+    # ax.set_title('Top 15 Dam–Sire Combinations by Positive Pregnancy Outcome')
+    # ax.grid(axis='y', linestyle='--', alpha=0.7)
+    # plt.tight_layout()
 
-    ###################### Feature 7: Dam Breed & Sire Breed Combination ######################
-    df['Dam Breed'] = df['Dam Breed'].astype(str).str.strip().str.title()
-    df['Sire Breed'] = df['Sire Breed'].astype(str).str.strip().str.title()
-    positive_data = df[df['Pregnacy report'] == 'positive']
-    grouped_positive = positive_data.groupby(['Dam Breed', 'Sire Breed']).size().reset_index(name='Positive Count')
-    total_reports = df.groupby(['Dam Breed', 'Sire Breed']).size().reset_index(name='Total Reports')
-    merged_data = pd.merge(grouped_positive, total_reports, on=['Dam Breed', 'Sire Breed'])
-    merged_data['% Positive'] = (merged_data['Positive Count'] / merged_data['Total Reports']) * 100
-    fig_breed_bar = px.bar(merged_data, x='Dam Breed', y='% Positive', color='Sire Breed', title="Positive Pregnancy Report % by Dam Breed and Sire Breed", labels={'% Positive': 'Percentage of Positive'}, text='% Positive')
-    fig_breed_bar.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
-    fig_breed_bar.update_layout(width=800, height=600, margin=dict(l=50, r=50, t=80, b=50), font=dict(size=12))
-    fig_breed_heatmap = px.density_heatmap(merged_data, x='Sire Breed', y='Dam Breed', z='% Positive', text_auto='.2f', color_continuous_scale='Cividis', title='% Positive Pregnancy Report Heatmap by Dam Breed and Sire Breed', labels={'% Positive': '% Positive'})
-    fig_breed_heatmap.update_layout(width=800, height=800, margin=dict(l=60, r=60, t=80, b=60), font=dict(size=12))
+    # ###################### Feature 7: Dam Breed & Sire Breed Combination ######################
+    # df['Dam Breed'] = df['Dam Breed'].astype(str).str.strip().str.title()
+    # df['Sire Breed'] = df['Sire Breed'].astype(str).str.strip().str.title()
+    # positive_data = df[df['Pregnacy report'] == 'positive']
+    # grouped_positive = positive_data.groupby(['Dam Breed', 'Sire Breed']).size().reset_index(name='Positive Count')
+    # total_reports = df.groupby(['Dam Breed', 'Sire Breed']).size().reset_index(name='Total Reports')
+    # merged_data = pd.merge(grouped_positive, total_reports, on=['Dam Breed', 'Sire Breed'])
+    # merged_data['% Positive'] = (merged_data['Positive Count'] / merged_data['Total Reports']) * 100
+    # fig_breed_bar = px.bar(merged_data, x='Dam Breed', y='% Positive', color='Sire Breed', title="Positive Pregnancy Report % by Dam Breed and Sire Breed", labels={'% Positive': 'Percentage of Positive'}, text='% Positive')
+    # fig_breed_bar.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+    # fig_breed_bar.update_layout(width=800, height=600, margin=dict(l=50, r=50, t=80, b=50), font=dict(size=12))
+    # fig_breed_heatmap = px.density_heatmap(merged_data, x='Sire Breed', y='Dam Breed', z='% Positive', text_auto='.2f', color_continuous_scale='Cividis', title='% Positive Pregnancy Report Heatmap by Dam Breed and Sire Breed', labels={'% Positive': '% Positive'})
+    # fig_breed_heatmap.update_layout(width=800, height=800, margin=dict(l=60, r=60, t=80, b=60), font=dict(size=12))
 
-    return {
-        "tables": summary_dfs,
-        "graphs": figs,
-        "site_summary": site_summary,
-        "site_graph": fig2,
-        "embryo_table": pivot_table,
-        "embryo_graph": fig3,
-        "semen_summary": semen_summary,
-        "semen_graph": fig4,
-        "org_summary": org_summary,
-        "org_graph": fig5,
-        "dam_sire_summary": summary,
-        "dam_sire_plotly": fig_plotly,
-        "dam_sire_top15": fig_top15,
-        "breed_summary": merged_data,
-        "breed_bar": fig_breed_bar,
-        "breed_heatmap": fig_breed_heatmap
-    }
+    # return {
+    #     "tables": summary_dfs,
+    #     "graphs": figs,
+    #     "site_summary": site_summary,
+    #     "site_graph": fig2,
+    #     "embryo_table": pivot_table,
+    #     "embryo_graph": fig3,
+    #     "semen_summary": semen_summary,
+    #     "semen_graph": fig4,
+    #     "org_summary": org_summary,
+    #     "org_graph": fig5,
+    #     "dam_sire_summary": summary,
+    #     "dam_sire_plotly": fig_plotly,
+    #     "dam_sire_top15": fig_top15,
+    #     "breed_summary": merged_data,
+    #     "breed_bar": fig_breed_bar,
+    #     "breed_heatmap": fig_breed_heatmap
+    # }
