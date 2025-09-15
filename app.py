@@ -59,7 +59,7 @@ def process_excel_file(filepath: str) -> dict:
         for i, val in enumerate(summary_df['Positive %']):
             ax.text(
                 i + 0.25,  # adjust for 2nd bar
-                summary_df['Positive Pregnancies'].iloc[i] + 5,  # offset to avoid overlap
+                summary_df['Positive Pregnancies'].iloc[i] + 10,  # offset to avoid overlap
                 f"{val}%",
                 ha='center', va='bottom', fontsize=9, color='darkgreen', fontweight='bold'
             )
@@ -99,7 +99,7 @@ def process_excel_file(filepath: str) -> dict:
     for i, val in enumerate(combined_df['Positive %']):
         ax_combined.text(
             i + 0.25,
-            combined_df['Positive Pregnancies'].iloc[i] + 5,  # offset to avoid overlap
+            combined_df['Positive Pregnancies'].iloc[i] + 10,  # offset to avoid overlap
             f"{val}%",
             ha='center', va='bottom', fontsize=9, color='darkgreen', fontweight='bold'
         )
@@ -258,3 +258,4 @@ if uploaded_file is not None:
         st.subheader("📄 Pregnancy Report by Organization")
         st.dataframe(result["tables"]["Pregnancy Report by Organization"])
         st.pyplot(result["org_graph"])
+
