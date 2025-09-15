@@ -16,18 +16,18 @@ def process_excel_file(filepath: str) -> dict:
     pregnancy_data.dropna(subset=['Date of Embryo Transfer'], inplace=True)
     pregnancy_data['Year'] = pregnancy_data['Date of Embryo Transfer'].dt.year
     pregnancy_data['Quarter'] = pregnancy_data['Date of Embryo Transfer'].dt.to_period('Q').dt.quarter
-
+    
     positive_df = pregnancy_data[
         pregnancy_data['Pregnacy report'].str.strip().str.lower() == 'positive'
     ].copy()
-
+    
     # Year-Quarter counts
     total_et_counts = pregnancy_data.groupby(['Year', 'Quarter']).size().unstack(fill_value=0)
     positive_et_counts = positive_df.groupby(['Year', 'Quarter']).size().unstack(fill_value=0)
-
+    
     summary_dfs = {}
     figs = {}
-
+    
     # ---------- Year-wise ----------
     for year in sorted(total_et_counts.index):
         summary_df = pd.DataFrame({
@@ -36,76 +36,82 @@ def process_excel_file(filepath: str) -> dict:
                 positive_et_counts.loc[year] if year in positive_et_counts.index else 0
             )
         }).fillna(0)
-
+    
         summary_df['Positive %'] = (
             (summary_df['Positive Pregnancies'] / summary_df['Total ETs'] * 100)
             .replace([float("inf"), -float("inf")], 0)
             .round(2)
         )
-
+    
         summary_dfs[year] = summary_df
-
+    
         # Plot
         fig, ax = plt.subplots(figsize=(8, 5))
         bar_container = summary_df[['Total ETs', 'Positive Pregnancies']].plot(
             kind='bar', ax=ax
         )
+    
+        # Count labels (on bars)
         for container in bar_container.containers:
             ax.bar_label(container, fmt='%d', padding=3)
-
-        # Add percentage labels above Positive Pregnancies bars
+    
+        # Percentage labels (above Positive bars with offset)
         for i, val in enumerate(summary_df['Positive %']):
             ax.text(
-                i + 0.25,
-                summary_df['Positive Pregnancies'].iloc[i] + 1,
+                i + 0.25,  # adjust for 2nd bar
+                summary_df['Positive Pregnancies'].iloc[i] + 5,  # offset to avoid overlap
                 f"{val}%",
-                ha='center', va='bottom', fontsize=9, color='darkgreen'
+                ha='center', va='bottom', fontsize=9, color='darkgreen', fontweight='bold'
             )
-
+    
         ax.set_title(f'Total vs Positive Pregnancies - {year}')
         ax.set_ylabel('Count')
         ax.set_xlabel('Quarter')
         plt.xticks(rotation=0)
         plt.tight_layout()
         figs[year] = fig
-
+    
     # ---------- Combined (All Years) ----------
     combined_total = pregnancy_data.groupby('Quarter').size()
     combined_positive = positive_df.groupby('Quarter').size()
-
+    
     combined_df = pd.DataFrame({
         'Total ETs': combined_total,
         'Positive Pregnancies': combined_positive
     }).fillna(0)
-
+    
     combined_df['Positive %'] = (
         (combined_df['Positive Pregnancies'] / combined_df['Total ETs'] * 100)
         .replace([float("inf"), -float("inf")], 0)
         .round(2)
     )
-
+    
     summary_dfs['All Years'] = combined_df
-
+    
     fig_combined, ax_combined = plt.subplots(figsize=(8, 5))
     bar_container = combined_df[['Total ETs', 'Positive Pregnancies']].plot(kind='bar', ax=ax_combined)
+    
+    # Count labels (on bars)
     for container in bar_container.containers:
         ax_combined.bar_label(container, fmt='%d', padding=3)
-
+    
+    # Percentage labels (above Positive bars with offset)
     for i, val in enumerate(combined_df['Positive %']):
         ax_combined.text(
             i + 0.25,
-            combined_df['Positive Pregnancies'].iloc[i] + 1,
+            combined_df['Positive Pregnancies'].iloc[i] + 5,  # offset to avoid overlap
             f"{val}%",
-            ha='center', va='bottom', fontsize=9, color='darkgreen'
+            ha='center', va='bottom', fontsize=9, color='darkgreen', fontweight='bold'
         )
-
+    
     ax_combined.set_title('Total vs Positive Pregnancies - All Years')
     ax_combined.set_ylabel('Count')
     ax_combined.set_xlabel('Quarter')
     plt.xticks(rotation=0)
     plt.tight_layout()
-
+    
     figs['All Years'] = fig_combined
+
 
     ###################### Feature 2: Site & Grade of CL ######################
     pd_data_CL = df[['Site of CL & grade', 'Pregnacy report']].copy()
