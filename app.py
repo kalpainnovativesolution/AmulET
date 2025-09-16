@@ -6,7 +6,7 @@ import seaborn as sns
 import os
 
 def process_excel_file(filepath: str) -> dict:
-    df = pd.read_excel(filepath, sheet_name='Sheet2', skiprows=1)
+    df = pd.read_excel(filepath, sheet_name='Sheet1', skiprows=1)
 
     ###################### Feature 1: Year & Quarter ######################
     pregnancy_data = df[['Date of Embryo Transfer', 'Pregnacy report']].copy()
@@ -258,6 +258,7 @@ if uploaded_file is not None:
         st.subheader("📄 Pregnancy Report by Organization")
         st.dataframe(result["tables"]["Pregnancy Report by Organization"])
         st.pyplot(result["org_graph"])
+
 
 
 
